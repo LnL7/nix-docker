@@ -1,7 +1,9 @@
 FROM lnl7/nix:1.11.2
 
 RUN nix-env -iA nixpkgs.openssh \
- && mkdir -p /etc/ssh \
+ && nix-store --optimize
+
+RUN mkdir -p /etc/ssh \
  && cp /root/.nix-profile/etc/ssh/sshd_config /etc/ssh \
  && echo "PermitRootLogin yes" >> /etc/ssh/sshd_config \
  && echo "UsePrivilegeSeparation no" >> /etc/ssh/sshd_config \

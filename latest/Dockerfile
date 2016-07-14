@@ -15,4 +15,5 @@ RUN nix-env -iA \
  nixpkgs.nix-repl \
  nixpkgs.silver-searcher \
  nixpkgs.vim \
- nixpkgs.which
+ nixpkgs.which \
+ && nix-store --optimize
