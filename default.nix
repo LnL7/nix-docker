@@ -38,7 +38,7 @@ let
     FROM scratch
     ADD nixos-system.tar.xz /
 
-    RUN ["${sw}/bin/mkdir", "-p", "/bin", "/usr/bin", "/etc", "/tmp", "/root/.nix-defexpr", "/run/current-system", "/nix/var/nix/profiles/per-user/root"]
+    RUN ["${sw}/bin/mkdir", "-p", "/bin", "/usr/bin", "/etc", "/var", "/tmp", "/root/.nix-defexpr", "/run/current-system", "/nix/var/nix/profiles/per-user/root"]
     RUN ["${sw}/bin/ln", "-s", "${sw}", "/run/current-system/sw"]
     RUN ["${sw}/bin/ln", "-s", "/run/current-system/sw/bin/sh", "/bin/sh"]
     RUN ["${sw}/bin/ln", "-s", "/run/current-system/sw/bin/env", "/usr/bin/env"]
@@ -49,8 +49,9 @@ let
     ADD group /etc
     ADD passwd /etc
 
-    ENV PATH /root/.nix-profile/bin:/root/.nix-profile/sbin:/run/current-system/sw/bin:/run/current-system/sw/sbin
     ENV SSL_CERT_FILE /run/current-system/sw/etc/ssl/certs/ca-bundle.crt
+    ENV PATH /root/.nix-profile/bin:/root/.nix-profile/sbin:/run/current-system/sw/bin:/run/current-system/sw/sbin
+    ENV MANPATH /root/.nix-profile/share/man:/run/current-system/sw/share/man
     ENV NIX_PATH /root/.nix-defexpr/nixpkgs:nixpkgs=/root/.nix-defexpr/nixpkgs
 
     RUN nix-store --init && nix-store --load-db < nix-path-registration \
