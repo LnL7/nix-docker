@@ -1,14 +1,15 @@
 FROM lnl7/nix:1.11.2
 
-RUN nix-channel --update && nix-env -iA \
- nixpkgs.bashInteractive \
- nixpkgs.cacert \
+RUN nix-env -iA \
  nixpkgs.curl \
+ nixpkgs.findutils \
  nixpkgs.git \
+ nixpkgs.gnutar \
  nixpkgs.jq \
  nixpkgs.less \
  nixpkgs.netcat \
  nixpkgs.nix \
  nixpkgs.nix-repl \
  nixpkgs.silver-searcher \
- nixpkgs.vim
+ nixpkgs.vim \
+ nixpkgs.which
