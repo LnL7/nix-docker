@@ -1,10 +1,13 @@
 FROM lnl7/nix:1.11.2
 
-RUN nix-env -iA nixpkgs.openssh \
+RUN nix-env -iA \
+ nixpkgs.gnused \
+ nixpkgs.openssh \
  && nix-store --optimize
 
 RUN mkdir -p /etc/ssh \
  && cp /root/.nix-profile/etc/ssh/sshd_config /etc/ssh \
+ && sed -i '/^PermitRootLogin/d; /^UsePrivilegeSeparation/d' /etc/ssh/sshd_config \
  && echo "PermitRootLogin yes" >> /etc/ssh/sshd_config \
  && echo "UsePrivilegeSeparation no" >> /etc/ssh/sshd_config \
  && ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N '' -t rsa \
