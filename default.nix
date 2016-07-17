@@ -5,11 +5,11 @@ let
 
   pkgs = import nixpkgs { inherit system; };
   inherit (pkgs) buildEnv writeText;
-  inherit (pkgs) bashInteractive coreutils less cacert nix;
+  inherit (pkgs) bashInteractive coreutils cacert gnutar gzip less nix;
 
   sw = buildEnv {
     name = "system-path";
-    paths = [ bashInteractive coreutils cacert less nix ];
+    paths = [ bashInteractive coreutils cacert gnutar gzip less nix ];
   };
 
   profile = buildEnv {
