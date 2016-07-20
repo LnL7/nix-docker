@@ -1,7 +1,7 @@
 { nixpkgs ? <nixpkgs>, system ? builtins.currentSystem }:
 
 let
-  inherit (import nixpkgs {}) stdenv;
+  inherit (import <nixpkgs> {}) stdenv;
 
   pkgs = import nixpkgs { inherit system; };
   inherit (pkgs) buildEnv writeText;
@@ -36,7 +36,7 @@ let
 
   docker = writeText "dockerfile" ''
     FROM scratch
-    ADD nixos-system.tar.xz /
+    ADD ${tarball}/tarball/nixos-system-${system}.tar.xz /
 
     RUN ["${sw}/bin/mkdir", "-p", "/bin", "/usr/bin", "/etc", "/var", "/tmp", "/root/.nix-defexpr", "/run/current-system", "/nix/var/nix/profiles/per-user/root"]
     RUN ["${sw}/bin/ln", "-s", "${sw}", "/run/current-system/sw"]
@@ -71,5 +71,5 @@ let
   };
 
 in {
-  inherit sw profile tarball env;
+  inherit sw profile tarball docker env;
 }
