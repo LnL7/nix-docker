@@ -1,4 +1,4 @@
-# nix-docker [https://hub.docker.com/r/lnl7/nix](https://hub.docker.com/r/lnl7/nix)
+# [nix-docker](https://hub.docker.com/r/lnl7/nix)
 
 Docker images for the Nix package manager
 
