@@ -1,4 +1,4 @@
-{ nixpkgs ? <nixpkgs>, system ? builtins.currentSystem }:
+{ nixpkgs ? <nixpkgs>, system ? "x86_64-linux" }:
 
 let
   inherit (import <nixpkgs> {}) stdenv;
