@@ -1,4 +1,4 @@
-# [nix-docker](https://hub.docker.com/r/lnl7/nix)
+# [nix-docker](https://github.com/lnl7/nix-docker)
 
 Docker images for the Nix package manager
 
@@ -15,10 +15,18 @@ The current official image for [nix](https://hub.docker.com/r/nixos/nix/) is bas
   this allows you to build expressions for `x86_64-linux` on other platforms (ex. building a new baseimage on a darwin machine)
 
 
+## Base Images
+
+All the images are based on the latest baseimage, previous versions are available in my repository [https://hub.docker.com/r/lnl7/nix/tags](https://hub.docker.com/r/lnl7/nix/tags).
+
+- `lnl7/nix:ea9d390`
+- `lnl7/nix:272cf5c`
+
+
 ## Default Image
 
 
-The default image uses [272cf5c](https://github.com/NixOS/nixpkgs/tree/272cf5c44fbe973c33e9dde9a40c458a341d48cc) with some common packages installed.
+The default image is intended for interactive use and includes some common and usefull packages, like nix-repl.
 ```sh
 docker run --rm -it lnl7/nix nix-repl '<nixpkgs>'
 nix-repl> 
