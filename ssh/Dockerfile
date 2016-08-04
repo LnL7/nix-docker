@@ -21,4 +21,4 @@ ADD insecure_rsa /root/.ssh/id_rsa
 ADD insecure_rsa.pub /root/.ssh/authorized_keys
 
 EXPOSE 22
-CMD ["/nix/store/ysya5rga20dd70g9a8xxz2jngyncc8w0-openssh-7.1p2/bin/sshd", "-D"]
+CMD ["/nix/store/xkpk9j0zxv1js7cr6dw1g03xv866m046-openssh-7.2p2/bin/sshd", "-D"]
