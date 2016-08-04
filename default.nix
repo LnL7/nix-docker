@@ -36,7 +36,7 @@ let
 
   docker = writeText "dockerfile" ''
     FROM scratch
-    ADD ${tarball}/tarball/nixos-system-${system}.tar.xz /
+    ADD nixos-system.tar.xz /
 
     RUN ["${sw}/bin/mkdir", "-p", "/bin", "/usr/bin", "/etc", "/var", "/tmp", "/root/.nix-defexpr", "/run/current-system", "/nix/var/nix/profiles/per-user/root"]
     RUN ["${sw}/bin/ln", "-s", "${sw}", "/run/current-system/sw"]
@@ -49,6 +49,7 @@ let
     ADD group /etc
     ADD passwd /etc
 
+    ENV GIT_SSL_CAINFO /run/current-system/sw/etc/ssl/certs/ca-bundle.crt
     ENV SSL_CERT_FILE /run/current-system/sw/etc/ssl/certs/ca-bundle.crt
     ENV PATH /root/.nix-profile/bin:/root/.nix-profile/sbin:/run/current-system/sw/bin:/run/current-system/sw/sbin
     ENV MANPATH /root/.nix-profile/share/man:/run/current-system/sw/share/man
