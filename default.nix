@@ -49,6 +49,8 @@ let
     ADD group /etc
     ADD passwd /etc
 
+    RUN echo "hosts: files dns myhostname mymachines" > /etc/nsswitch.conf
+
     ENV GIT_SSL_CAINFO /run/current-system/sw/etc/ssl/certs/ca-bundle.crt
     ENV SSL_CERT_FILE /run/current-system/sw/etc/ssl/certs/ca-bundle.crt
     ENV PATH /root/.nix-profile/bin:/root/.nix-profile/sbin:/run/current-system/sw/bin:/run/current-system/sw/sbin
