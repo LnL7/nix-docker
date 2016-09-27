@@ -1,4 +1,4 @@
-FROM lnl7/nix:1.11.2
+FROM lnl7/nix:1.11.4
 
 RUN nix-env -iA \
  nixpkgs.curl \
