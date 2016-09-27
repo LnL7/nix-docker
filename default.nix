@@ -1,13 +1,10 @@
-{ nixpkgs ? <nixpkgs>, system ? "x86_64-linux" }:
+{ nixpkgs ? <nixpkgs>, pkgs ? import nixpkgs {} }:
 
 let
-  inherit (import <nixpkgs> {}) stdenv;
-
-  pkgs = import nixpkgs { inherit system; };
-  inherit (pkgs) buildEnv writeText;
+  inherit (pkgs) stdenv callPackage buildEnv writeText;
   inherit (pkgs) bashInteractive coreutils cacert gnutar gzip less nix;
 
-  sw = buildEnv {
+  path = buildEnv {
     name = "system-path";
     paths = [ bashInteractive coreutils cacert gnutar gzip less nix ];
   };
@@ -19,7 +16,7 @@ let
 
   tarball = pkgs.callPackage <nixpkgs/nixos/lib/make-system-tarball.nix> {
     contents = [];
-    storeContents = map (x: { object = x; symlink = "none"; }) [ sw profile ];
+    storeContents = map (x: { object = x; symlink = "none"; }) [ path profile ];
     extraArgs = "--owner=0";
   };
 
@@ -38,13 +35,13 @@ let
     FROM scratch
     ADD nixos-system.tar.xz /
 
-    RUN ["${sw}/bin/mkdir", "-p", "/bin", "/usr/bin", "/etc", "/var", "/tmp", "/root/.nix-defexpr", "/run/current-system", "/nix/var/nix/profiles/per-user/root"]
-    RUN ["${sw}/bin/ln", "-s", "${sw}", "/run/current-system/sw"]
-    RUN ["${sw}/bin/ln", "-s", "/run/current-system/sw/bin/sh", "/bin/sh"]
-    RUN ["${sw}/bin/ln", "-s", "/run/current-system/sw/bin/env", "/usr/bin/env"]
-    RUN ["${sw}/bin/ln", "-s", "${profile}", "/nix/var/nix/profiles/per-user/root/profile-1-link"]
-    RUN ["${sw}/bin/ln", "-s", "/nix/var/nix/profiles/per-user/root/profile-1-link", "/nix/var/nix/profiles/per-user/root/profile"]
-    RUN ["${sw}/bin/ln", "-s", "/nix/var/nix/profiles/per-user/root/profile", "/root/.nix-profile"]
+    RUN ["${path}/bin/mkdir", "-p", "/bin", "/usr/bin", "/etc", "/var", "/tmp", "/root/.nix-defexpr", "/run/current-system", "/nix/var/nix/profiles/per-user/root"]
+    RUN ["${path}/bin/ln", "-s", "${path}", "/run/current-system/sw"]
+    RUN ["${path}/bin/ln", "-s", "/run/current-system/sw/bin/sh", "/bin/sh"]
+    RUN ["${path}/bin/ln", "-s", "/run/current-system/sw/bin/env", "/usr/bin/env"]
+    RUN ["${path}/bin/ln", "-s", "${profile}", "/nix/var/nix/profiles/per-user/root/profile-1-link"]
+    RUN ["${path}/bin/ln", "-s", "/nix/var/nix/profiles/per-user/root/profile-1-link", "/nix/var/nix/profiles/per-user/root/profile"]
+    RUN ["${path}/bin/ln", "-s", "/nix/var/nix/profiles/per-user/root/profile", "/root/.nix-profile"]
 
     ADD group /etc
     ADD passwd /etc
@@ -66,7 +63,7 @@ let
   env = stdenv.mkDerivation {
     name = "build-environment";
     shellHooks = ''
-      cp -f ${tarball}/tarball/nixos-system-${system}.tar.xz nixos-system.tar.xz
+      cp -f ${tarball}/tarball/nixos-system-*.tar.xz nixos-system.tar.xz
       cp -f ${group} group
       cp -f ${passwd} passwd
       cp -f ${docker} Dockerfile
@@ -74,5 +71,5 @@ let
   };
 
 in {
-  inherit sw profile tarball docker env;
+  inherit path profile tarball docker env;
 }
