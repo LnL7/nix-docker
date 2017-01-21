@@ -19,6 +19,7 @@ The current official image for [nix](https://hub.docker.com/r/nixos/nix/) is bas
 
 All the images are based on the latest baseimage, previous versions are available in my repository [https://hub.docker.com/r/lnl7/nix/tags](https://hub.docker.com/r/lnl7/nix/tags).
 
+- `lnl7/nix:2017-01-21` (1.11.6)
 - `lnl7/nix:124f25b` (1.11.4)
 - `lnl7/nix:ea9d390` (1.11.2)
 - `lnl7/nix:272cf5c`
@@ -36,7 +37,7 @@ nix-repl>
 ## Building an Image
 
 ```Dockerfile
-FROM lnl7/nix:1.11.4
+FROM lnl7/nix:1.11.6
 
 RUN nix-env -iA \
  nixpkgs.curl \
