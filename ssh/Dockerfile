@@ -1,4 +1,4 @@
-FROM lnl7/nix:1.11.4
+FROM lnl7/nix:1.11.6
 
 RUN nix-env -iA \
  nixpkgs.gnused \
@@ -10,8 +10,8 @@ RUN mkdir -p /etc/ssh \
  && sed -i '/^PermitRootLogin/d; /^UsePrivilegeSeparation/d' /etc/ssh/sshd_config \
  && echo "PermitRootLogin yes" >> /etc/ssh/sshd_config \
  && echo "UsePrivilegeSeparation no" >> /etc/ssh/sshd_config \
- && ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N '' -t rsa \
- && ssh-keygen -f /etc/ssh/ssh_host_dsa_key -N '' -t dsa \
+ && ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N "" -t rsa \
+ && ssh-keygen -f /etc/ssh/ssh_host_dsa_key -N "" -t dsa \
  && echo "export SSL_CERT_FILE=$SSL_CERT_FILE" >> /etc/bashrc \
  && echo "export PATH=$PATH" >> /etc/bashrc \
  && echo "export NIX_PATH=$NIX_PATH" >> /etc/bashrc \
@@ -21,4 +21,4 @@ ADD insecure_rsa /root/.ssh/id_rsa
 ADD insecure_rsa.pub /root/.ssh/authorized_keys
 
 EXPOSE 22
-CMD ["/nix/store/nqaza7wvc9jja0hy6dgkdb7kpwf6yhlc-openssh-7.3p1/bin/sshd", "-D"]
+CMD ["/nix/store/z4x42c4w7xxmy1wl7mh5qqqakr79fama-openssh-7.4p1/bin/sshd", "-D"]
