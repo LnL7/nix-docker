@@ -1,7 +1,7 @@
 { src ? ./srcs/2017-01-21.nix, nixpkgs ? <nixpkgs>, system ? builtins.currentSystem }:
 
 let
-  inherit (pkgs) stdenv buildEnv writeText;
+  inherit (pkgs) dockerTools stdenv buildEnv writeText;
   inherit (pkgs) bashInteractive coreutils cacert gnutar gzip less nix openssh;
 
   pkgs = import unstable { system = "x86_64-linux"; };
@@ -9,60 +9,73 @@ let
   native = import nixpkgs { inherit system; };
   unstable = native.callPackage src { stdenv = native.stdenvNoCC; };
 
-  tarball = native.callPackage <nixpkgs/nixos/lib/make-system-tarball.nix> {
-    contents = [];
-    storeContents = map (x: { object = x; symlink = "none"; }) [ path profile ];
-    extraArgs = "--owner=0";
-  };
-
   path = buildEnv {
     name = "system-path";
-    paths = [ bashInteractive coreutils cacert gnutar gzip less nix ];
+    paths = [ bashInteractive coreutils less nix ];
   };
 
-  profile = buildEnv {
-    name = "user-environment";
-    paths = [ ];
-  };
-
-  group = writeText "group" ''
-    root:x:0:
-    nixbld:x:30000:nixbld1,nixbld2
-  '';
-
-  passwd = writeText "passwd" ''
+  passwd = ''
     root:x:0:0::/root:/run/current-system/sw/bin/bash
-    nixbld1:x:30001:30000::/var/empty:/bin/nologin
-    nixbld2:x:30002:30000::/var/empty:/bin/nologin
+    nixbld1:x:30001:30000::/var/empty:
+    nixbld2:x:30002:30000::/var/empty:
+    nixbld3:x:30003:30000::/var/empty:
+    nixbld4:x:30004:30000::/var/empty:
   '';
+
+  group = ''
+    root:x:0:
+    nixbld:x:30000:nixbld1,nixbld2,nixbld3,nixbld4
+  '';
+
+  nsswitch = ''
+    hosts: files dns myhostname mymachines
+  '';
+
+  image = dockerTools.buildImage rec {
+    name = "lnl7/nix";
+    tag = "${unstable.version}-base";
+    contents = stdenv.mkDerivation {
+      name = "user-environment";
+      phases = [ "installPhase" "fixupPhase" ];
+
+      exportReferencesGraph =
+        map (drv: [("closure-" + baseNameOf drv) drv]) [ path cacert unstable ];
+
+      installPhase = ''
+        mkdir -p $out/run/current-system $out/var
+        ln -s /run $out/var/run
+        ln -s ${path} $out/run/current-system/sw
+
+        mkdir -p $out/nix/var/nix/profiles/per-user/root $out/root/.nix-defexpr
+        ln -s /nix/var/nix/profiles/per-user/root/profile $out/root/.nix-profile
+        ln -s ${unstable} $out/root/.nix-defexpr/nixos
+        ln -s ${unstable} $out/root/.nix-defexpr/nixpkgs
+
+        mkdir -p $out/bin $out/usr/bin
+        ln -s ${stdenv.shell} $out/bin/sh
+        ln -s ${pkgs.coreutils}/bin/env $out/usr/bin/env
+
+        mkdir -p $out/etc $out/tmp
+        echo '${passwd}' > $out/etc/passwd
+        echo '${group}' > $out/etc/group
+        echo '${nsswitch}' > $out/etc/nsswitch.conf
+
+        printRegistration=1 ${pkgs.perl}/bin/perl ${pkgs.pathsFromGraph} closure-* > $out/.reginfo
+      '';
+    };
+    config.Cmd = [ "${pkgs.bashInteractive}/bin/bash" ];
+    config.Env =
+      [ "PATH=/root/.nix-profile/bin:/run/current-system/sw/bin"
+        "MANPATH=/root/.nix-profile/share/man:/run/current-system/sw/share/man"
+        "NIX_PATH=nixpkgs=${unstable}"
+        "GIT_SSL_CAINFO=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
+        "SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
+      ];
+  };
 
   baseDocker = writeText "Dockerfile" ''
-    FROM scratch
-    ADD nixos-system.tar.xz /
-
-    RUN ["${path}/bin/mkdir", "-p", "/bin", "/usr/bin", "/etc", "/var", "/tmp", "/root/.nix-defexpr", "/run/current-system", "/nix/var/nix/profiles/per-user/root"]
-    RUN ["${path}/bin/ln", "-s", "${path}", "/run/current-system/sw"]
-    RUN ["${path}/bin/ln", "-s", "/run/current-system/sw/bin/sh", "/bin/sh"]
-    RUN ["${path}/bin/ln", "-s", "/run/current-system/sw/bin/env", "/usr/bin/env"]
-    RUN ["${path}/bin/ln", "-s", "${profile}", "/nix/var/nix/profiles/per-user/root/profile-1-link"]
-    RUN ["${path}/bin/ln", "-s", "/nix/var/nix/profiles/per-user/root/profile-1-link", "/nix/var/nix/profiles/per-user/root/profile"]
-    RUN ["${path}/bin/ln", "-s", "/nix/var/nix/profiles/per-user/root/profile", "/root/.nix-profile"]
-
-    ADD group /etc
-    ADD passwd /etc
-
-    RUN echo "hosts: files dns myhostname mymachines" > /etc/nsswitch.conf
-
-    ENV GIT_SSL_CAINFO /run/current-system/sw/etc/ssl/certs/ca-bundle.crt
-    ENV SSL_CERT_FILE /run/current-system/sw/etc/ssl/certs/ca-bundle.crt
-    ENV PATH /root/.nix-profile/bin:/root/.nix-profile/sbin:/run/current-system/sw/bin:/run/current-system/sw/sbin
-    ENV MANPATH /root/.nix-profile/share/man:/run/current-system/sw/share/man
-    ENV NIX_PATH /root/.nix-defexpr/channels
-
-    RUN nix-store --init && nix-store --load-db < nix-path-registration \
-     && rm env-vars pathlist nix-path-registration closure-*
-
-    CMD ["bash"]
+    FROM lnl7/nix:${unstable.version}-base
+    RUN nix-store --init && nix-store --load-db < .reginfo
   '';
 
   pkgsDocker = writeText "Dockerfile" ''
@@ -124,9 +137,6 @@ let
     name = "build-environment";
     shellHooks = ''
       mkdir -p pkgs latest ssh
-      cp -f ${tarball}/tarball/nixos-system-*.tar.xz nixos-system.tar.xz
-      cp -f ${group} group
-      cp -f ${passwd} passwd
       cp -f ${baseDocker} Dockerfile
       cp -f ${pkgsDocker} pkgs/Dockerfile
       cp -f ${latestDocker} latest/Dockerfile
@@ -138,5 +148,5 @@ in
 
 {
   inherit baseDocker pkgsDocker latestDocker sshDocker;
-  inherit env path profile tarball unstable;
+  inherit env image path unstable;
 }
