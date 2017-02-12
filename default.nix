@@ -43,11 +43,11 @@ let
       ln -s /run $out/var/run
       ln -s ${path} $out/run/current-system/sw
 
-      mkdir -p $out/bin $out/usr/bin
+      mkdir -p $out/bin $out/usr/bin $out/sbin
       ln -s ${stdenv.shell} $out/bin/sh
       ln -s ${pkgs.coreutils}/bin/env $out/usr/bin/env
 
-      mkdir -p $out/etc $out/tmp
+      mkdir -p $out/etc
       echo '${passwd}' > $out/etc/passwd
       echo '${group}' > $out/etc/group
       echo '${nsswitch}' > $out/etc/nsswitch.conf
@@ -75,14 +75,15 @@ let
     FROM nix-base:${unstable.version}
     RUN nix-store --init && nix-store --load-db < .reginfo
 
-    RUN mkdir -p /nix/var/nix/profiles/per-user/root /root/.nix-defexpr \
+    RUN mkdir -m 0777 -p /tmp \
+     && mkdir -p /nix/var/nix/profiles/per-user/root /root/.nix-defexpr \
      && ln -s /nix/var/nix/profiles/per-user/root/profile /root/.nix-profile \
      && ln -s ${unstable} /root/.nix-defexpr/nixos \
      && ln -s ${unstable} /root/.nix-defexpr/nixpkgs
   '';
 
   latestDocker = writeText "Dockerfile" ''
-    FROM lnl7/nix:${(builtins.parseDrvName nix.name).version}
+    FROM lnl7/nix:${unstable.version}
 
     RUN nix-env -f '<nixpkgs>' -iA \
         curl \
@@ -103,7 +104,7 @@ let
   '';
 
   sshDocker = writeText "Dockerfile" ''
-    FROM lnl7/nix:${(builtins.parseDrvName nix.name).version}
+    FROM lnl7/nix:${unstable.version}
 
     RUN nix-env -f '<nixpkgs>' -iA \
         gnused \
