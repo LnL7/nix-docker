@@ -78,40 +78,35 @@ let
     RUN nix-store --init && nix-store --load-db < .reginfo
   '';
 
-  pkgsDocker = writeText "Dockerfile" ''
-    FROM lnl7/nix:${unstable.version}
-    RUN nix-channel --add https://nixos.org/channels/nixpkgs-unstable \
-     && nix-channel --update
-  '';
-
   latestDocker = writeText "Dockerfile" ''
     FROM lnl7/nix:${(builtins.parseDrvName nix.name).version}
 
-    RUN nix-env -iA \
-     nixpkgs.curl \
-     nixpkgs.findutils \
-     nixpkgs.git \
-     nixpkgs.glibc \
-     nixpkgs.gnugrep \
-     nixpkgs.gnused \
-     nixpkgs.gnutar \
-     nixpkgs.jq \
-     nixpkgs.netcat \
-     nixpkgs.nix \
-     nixpkgs.nix-prefetch-scripts \
-     nixpkgs.nix-repl \
-     nixpkgs.silver-searcher \
-     nixpkgs.vim \
-     nixpkgs.which \
+    RUN nix-env -f '<nixpkgs>' -iA \
+        curl \
+        findutils \
+        git \
+        glibc \
+        gnugrep \
+        gnused \
+        gnutar \
+        jq \
+        netcat \
+        nix \
+        nix-prefetch-scripts \
+        nix-repl \
+        psproc \
+        silver-searcher \
+        vim \
+        which \
      && nix-store --optimize
   '';
 
   sshDocker = writeText "Dockerfile" ''
     FROM lnl7/nix:${(builtins.parseDrvName nix.name).version}
 
-    RUN nix-env -iA \
-     nixpkgs.gnused \
-     nixpkgs.openssh \
+    RUN nix-env -f '<nixpkgs>' -iA \
+        gnused \
+        openssh \
      && nix-store --optimize
 
     RUN mkdir -p /etc/ssh \
@@ -136,9 +131,8 @@ let
   env = native.stdenv.mkDerivation {
     name = "build-environment";
     shellHooks = ''
-      mkdir -p pkgs latest ssh
+      mkdir -p latest ssh
       cp -f ${baseDocker} Dockerfile
-      cp -f ${pkgsDocker} pkgs/Dockerfile
       cp -f ${latestDocker} latest/Dockerfile
       cp -f ${sshDocker} ssh/Dockerfile
     '';
@@ -147,6 +141,6 @@ let
 in
 
 {
-  inherit baseDocker pkgsDocker latestDocker sshDocker;
+  inherit baseDocker latestDocker sshDocker;
   inherit env image path unstable;
 }

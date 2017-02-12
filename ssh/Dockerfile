@@ -1,8 +1,8 @@
 FROM lnl7/nix:1.11.6
 
-RUN nix-env -iA \
- nixpkgs.gnused \
- nixpkgs.openssh \
+RUN nix-env -f '<nixpkgs>' -iA \
+    gnused \
+    openssh \
  && nix-store --optimize
 
 RUN mkdir -p /etc/ssh \
