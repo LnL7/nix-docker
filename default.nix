@@ -31,38 +31,36 @@ let
     hosts: files dns myhostname mymachines
   '';
 
+  contents = stdenv.mkDerivation {
+    name = "user-environment";
+    phases = [ "installPhase" "fixupPhase" ];
+
+    exportReferencesGraph =
+      map (drv: [("closure-" + baseNameOf drv) drv]) [ path cacert unstable ];
+
+    installPhase = ''
+      mkdir -p $out/run/current-system $out/var
+      ln -s /run $out/var/run
+      ln -s ${path} $out/run/current-system/sw
+
+      mkdir -p $out/bin $out/usr/bin
+      ln -s ${stdenv.shell} $out/bin/sh
+      ln -s ${pkgs.coreutils}/bin/env $out/usr/bin/env
+
+      mkdir -p $out/etc $out/tmp
+      echo '${passwd}' > $out/etc/passwd
+      echo '${group}' > $out/etc/group
+      echo '${nsswitch}' > $out/etc/nsswitch.conf
+
+      printRegistration=1 ${pkgs.perl}/bin/perl ${pkgs.pathsFromGraph} closure-* > $out/.reginfo
+    '';
+  };
+
   image = dockerTools.buildImage rec {
-    name = "lnl7/nix";
-    tag = "${unstable.version}-base";
-    contents = stdenv.mkDerivation {
-      name = "user-environment";
-      phases = [ "installPhase" "fixupPhase" ];
+    name = "nix-base";
+    tag = "${unstable.version}";
+    inherit contents;
 
-      exportReferencesGraph =
-        map (drv: [("closure-" + baseNameOf drv) drv]) [ path cacert unstable ];
-
-      installPhase = ''
-        mkdir -p $out/run/current-system $out/var
-        ln -s /run $out/var/run
-        ln -s ${path} $out/run/current-system/sw
-
-        mkdir -p $out/nix/var/nix/profiles/per-user/root $out/root/.nix-defexpr
-        ln -s /nix/var/nix/profiles/per-user/root/profile $out/root/.nix-profile
-        ln -s ${unstable} $out/root/.nix-defexpr/nixos
-        ln -s ${unstable} $out/root/.nix-defexpr/nixpkgs
-
-        mkdir -p $out/bin $out/usr/bin
-        ln -s ${stdenv.shell} $out/bin/sh
-        ln -s ${pkgs.coreutils}/bin/env $out/usr/bin/env
-
-        mkdir -p $out/etc $out/tmp
-        echo '${passwd}' > $out/etc/passwd
-        echo '${group}' > $out/etc/group
-        echo '${nsswitch}' > $out/etc/nsswitch.conf
-
-        printRegistration=1 ${pkgs.perl}/bin/perl ${pkgs.pathsFromGraph} closure-* > $out/.reginfo
-      '';
-    };
     config.Cmd = [ "${pkgs.bashInteractive}/bin/bash" ];
     config.Env =
       [ "PATH=/root/.nix-profile/bin:/run/current-system/sw/bin"
@@ -74,8 +72,13 @@ let
   };
 
   baseDocker = writeText "Dockerfile" ''
-    FROM lnl7/nix:${unstable.version}-base
+    FROM nix-base:${unstable.version}
     RUN nix-store --init && nix-store --load-db < .reginfo
+
+    RUN mkdir -p /nix/var/nix/profiles/per-user/root /root/.nix-defexpr \
+     && ln -s /nix/var/nix/profiles/per-user/root/profile /root/.nix-profile \
+     && ln -s ${unstable} /root/.nix-defexpr/nixos \
+     && ln -s ${unstable} /root/.nix-defexpr/nixpkgs
   '';
 
   latestDocker = writeText "Dockerfile" ''
@@ -90,15 +93,13 @@ let
         gnused \
         gnutar \
         jq \
-        netcat \
         nix \
-        nix-prefetch-scripts \
         nix-repl \
-        psproc \
+        procps \
         silver-searcher \
         vim \
         which \
-     && nix-store --optimize
+     && nix-store --gc
   '';
 
   sshDocker = writeText "Dockerfile" ''
@@ -107,7 +108,7 @@ let
     RUN nix-env -f '<nixpkgs>' -iA \
         gnused \
         openssh \
-     && nix-store --optimize
+     && nix-store --gc
 
     RUN mkdir -p /etc/ssh \
      && cp /root/.nix-profile/etc/ssh/sshd_config /etc/ssh \
@@ -128,10 +129,25 @@ let
     CMD ["${openssh}/bin/sshd", "-D"]
   '';
 
+  run = native.writeScript "run-docker-build" ''
+    #! ${native.stdenv.shell}
+    set -e
+
+    echo "building root image..." >&2
+    imageOut=$(nix-build -A image --no-out-link)
+    echo "importing root image..." >&2
+    docker load < $imageOut
+    echo "building ${unstable.version}..." >&2
+    cp -f ${baseDocker} Dockerfile
+    docker build -t lnl7/nix:${unstable.version} .
+    docker rmi nix-base:${unstable.version}
+  '';
+
   env = native.stdenv.mkDerivation {
     name = "build-environment";
     shellHooks = ''
-      mkdir -p latest ssh
+      nix-build -A run
+
       cp -f ${baseDocker} Dockerfile
       cp -f ${latestDocker} latest/Dockerfile
       cp -f ${sshDocker} ssh/Dockerfile
@@ -142,5 +158,5 @@ in
 
 {
   inherit baseDocker latestDocker sshDocker;
-  inherit env image path unstable;
+  inherit env run image contents path unstable;
 }

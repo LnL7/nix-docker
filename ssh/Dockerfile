@@ -3,7 +3,7 @@ FROM lnl7/nix:1.11.6
 RUN nix-env -f '<nixpkgs>' -iA \
     gnused \
     openssh \
- && nix-store --optimize
+ && nix-store --gc
 
 RUN mkdir -p /etc/ssh \
  && cp /root/.nix-profile/etc/ssh/sshd_config /etc/ssh \

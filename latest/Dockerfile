@@ -9,12 +9,10 @@ RUN nix-env -f '<nixpkgs>' -iA \
     gnused \
     gnutar \
     jq \
-    netcat \
     nix \
-    nix-prefetch-scripts \
     nix-repl \
-    psproc \
+    procps \
     silver-searcher \
     vim \
     which \
- && nix-store --optimize
+ && nix-store --gc
