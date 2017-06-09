@@ -47,16 +47,13 @@ RUN nix-env -iA \
 ## Building a new Base Image
 
 ```sh
-nix-build -A docker
-docker build -t nix:base result
+nix-shell -A env --run './result/bin/run-docker-build'
 ```
 
-The expression also includes an `env` attribute that copies the outputs to the current directory.
-Both the `nixpkgs` attribute can be overridden to use a custom [nixpkgs](https://github.com/NixOS/nixpkgs) for the image.
+The `src` can also can be overridden to use a custom [nixpkgs](https://github.com/NixOS/nixpkgs) for the image.
 
 ```sh
-nix-shell -A env --arg nixpkgs /tmp/custom-nixpkgs --argstr system x86_64-linux
-[nix-shell:/tmp]$ docker build -t nix:base .
+nix-shell -A env --argstr src ./srcs/2017-01-21.nix
 ```
 
 ## Running as a [remote builder](https://nixos.org/wiki/Distributed_build)
