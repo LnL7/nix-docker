@@ -1,4 +1,4 @@
-{ src ? ./srcs/2017-01-21.nix, nixpkgs ? <nixpkgs>, system ? builtins.currentSystem }:
+{ src ? ./srcs/2017-06-09.nix, nixpkgs ? <nixpkgs>, system ? builtins.currentSystem }:
 
 let
   inherit (pkgs) dockerTools stdenv buildEnv writeText;
@@ -130,7 +130,7 @@ let
     CMD ["${openssh}/bin/sshd", "-D"]
   '';
 
-  run = native.writeScript "run-docker-build" ''
+  run = native.writeScriptBin "run-docker-build" ''
     #! ${native.stdenv.shell}
     set -e
 
