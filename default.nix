@@ -111,11 +111,11 @@ let
         openssh \
      && nix-store --gc
 
-    RUN mkdir -p /etc/ssh \
+    RUN mkdir -p /etc/ssh /var/empty \
+     && echo "sshd:x:498:65534::/var/empty:" >> /etc/passwd \
      && cp /root/.nix-profile/etc/ssh/sshd_config /etc/ssh \
      && sed -i '/^PermitRootLogin/d; /^UsePrivilegeSeparation/d' /etc/ssh/sshd_config \
      && echo "PermitRootLogin yes" >> /etc/ssh/sshd_config \
-     && echo "UsePrivilegeSeparation no" >> /etc/ssh/sshd_config \
      && ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N "" -t rsa \
      && ssh-keygen -f /etc/ssh/ssh_host_dsa_key -N "" -t dsa \
      && echo "export SSL_CERT_FILE=$SSL_CERT_FILE" >> /etc/bashrc \
