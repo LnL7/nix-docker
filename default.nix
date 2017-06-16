@@ -2,7 +2,7 @@
 
 let
   inherit (pkgs) dockerTools stdenv buildEnv writeText;
-  inherit (pkgs) bashInteractive coreutils cacert gnutar gzip less nix openssh;
+  inherit (pkgs) bashInteractive coreutils cacert gnutar gzip less nix openssh shadow;
 
   pkgs = import unstable { system = "x86_64-linux"; };
 
@@ -11,19 +11,20 @@ let
 
   path = buildEnv {
     name = "system-path";
-    paths = [ bashInteractive coreutils less nix ];
+    paths = [ bashInteractive coreutils less nix shadow ];
   };
 
   passwd = ''
     root:x:0:0::/root:/run/current-system/sw/bin/bash
-    nixbld1:x:30001:30000::/var/empty:
-    nixbld2:x:30002:30000::/var/empty:
-    nixbld3:x:30003:30000::/var/empty:
-    nixbld4:x:30004:30000::/var/empty:
+    nixbld1:x:30001:30000::/var/empty:/run/current-system/sw/bin/nologin
+    nixbld2:x:30002:30000::/var/empty:/run/current-system/sw/bin/nologin
+    nixbld3:x:30003:30000::/var/empty:/run/current-system/sw/bin/nologin
+    nixbld4:x:30004:30000::/var/empty:/run/current-system/sw/bin/nologin
   '';
 
   group = ''
     root:x:0:
+    nogroup:x:65534:
     nixbld:x:30000:nixbld1,nixbld2,nixbld3,nixbld4
   '';
 
@@ -45,7 +46,7 @@ let
 
       mkdir -p $out/bin $out/usr/bin $out/sbin
       ln -s ${stdenv.shell} $out/bin/sh
-      ln -s ${pkgs.coreutils}/bin/env $out/usr/bin/env
+      ln -s ${coreutils}/bin/env $out/usr/bin/env
 
       mkdir -p $out/etc
       echo '${passwd}' > $out/etc/passwd
@@ -61,13 +62,13 @@ let
     tag = "${unstable.version}";
     inherit contents;
 
-    config.Cmd = [ "${pkgs.bashInteractive}/bin/bash" ];
+    config.Cmd = [ "${bashInteractive}/bin/bash" ];
     config.Env =
       [ "PATH=/root/.nix-profile/bin:/run/current-system/sw/bin"
         "MANPATH=/root/.nix-profile/share/man:/run/current-system/sw/share/man"
         "NIX_PATH=nixpkgs=${unstable}"
-        "GIT_SSL_CAINFO=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
-        "SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
+        "GIT_SSL_CAINFO=${cacert}/etc/ssl/certs/ca-bundle.crt"
+        "SSL_CERT_FILE=${cacert}/etc/ssl/certs/ca-bundle.crt"
       ];
   };
 
@@ -111,10 +112,10 @@ let
         openssh \
      && nix-store --gc
 
-    RUN mkdir -p /etc/ssh /var/empty \
-     && echo "sshd:x:498:65534::/var/empty:" >> /etc/passwd \
+    RUN mkdir -p /etc/ssh \
+     && echo "sshd:x:498:65534::/var/empty:/run/current-system/sw/bin/nologin" >> /etc/passwd \
      && cp /root/.nix-profile/etc/ssh/sshd_config /etc/ssh \
-     && sed -i '/^PermitRootLogin/d; /^UsePrivilegeSeparation/d' /etc/ssh/sshd_config \
+     && sed -i '/^PermitRootLogin/d' /etc/ssh/sshd_config \
      && echo "PermitRootLogin yes" >> /etc/ssh/sshd_config \
      && ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N "" -t rsa \
      && ssh-keygen -f /etc/ssh/ssh_host_dsa_key -N "" -t dsa \
@@ -127,7 +128,7 @@ let
     ADD insecure_rsa.pub /root/.ssh/authorized_keys
 
     EXPOSE 22
-    CMD ["${openssh}/bin/sshd", "-D"]
+    CMD ["${openssh}/bin/sshd", "-D", "-e"]
   '';
 
   run = native.writeScriptBin "run-docker-build" ''
