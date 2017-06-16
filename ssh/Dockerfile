@@ -5,10 +5,10 @@ RUN nix-env -f '<nixpkgs>' -iA \
     openssh \
  && nix-store --gc
 
-RUN mkdir -p /etc/ssh /var/empty \
- && echo "sshd:x:498:65534::/var/empty:" >> /etc/passwd \
+RUN mkdir -p /etc/ssh \
+ && echo "sshd:x:498:65534::/var/empty:/run/current-system/sw/bin/nologin" >> /etc/passwd \
  && cp /root/.nix-profile/etc/ssh/sshd_config /etc/ssh \
- && sed -i '/^PermitRootLogin/d; /^UsePrivilegeSeparation/d' /etc/ssh/sshd_config \
+ && sed -i '/^PermitRootLogin/d' /etc/ssh/sshd_config \
  && echo "PermitRootLogin yes" >> /etc/ssh/sshd_config \
  && ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N "" -t rsa \
  && ssh-keygen -f /etc/ssh/ssh_host_dsa_key -N "" -t dsa \
@@ -21,4 +21,4 @@ ADD insecure_rsa /root/.ssh/id_rsa
 ADD insecure_rsa.pub /root/.ssh/authorized_keys
 
 EXPOSE 22
-CMD ["/nix/store/qx1nldmmj47wvd4f3lji1qvza2cjkl1i-openssh-7.5p1/bin/sshd", "-D"]
+CMD ["/nix/store/qx1nldmmj47wvd4f3lji1qvza2cjkl1i-openssh-7.5p1/bin/sshd", "-D", "-e"]
