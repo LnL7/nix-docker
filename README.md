@@ -19,6 +19,8 @@ The current official image for [nix](https://hub.docker.com/r/nixos/nix/) is bas
 
 All the images are based on the latest baseimage, previous versions are available in my repository [https://hub.docker.com/r/lnl7/nix/tags](https://hub.docker.com/r/lnl7/nix/tags).
 
+- `lnl7/nix:2017-06-17` (1.11.10)
+- `lnl7/nix:2017-06-09` (1.11.9)
 - `lnl7/nix:2017-01-21` (1.11.6)
 - `lnl7/nix:124f25b` (1.11.4)
 - `lnl7/nix:ea9d390` (1.11.2)
@@ -37,7 +39,7 @@ nix-repl>
 ## Building an Image
 
 ```Dockerfile
-FROM lnl7/nix:1.11.6
+FROM lnl7/nix:1.11.10
 
 RUN nix-env -iA \
  nixpkgs.curl \
@@ -53,7 +55,7 @@ nix-shell -A env --run './result/bin/run-docker-build'
 The `src` can also can be overridden to use a custom [nixpkgs](https://github.com/NixOS/nixpkgs) for the image.
 
 ```sh
-nix-shell -A env --argstr src ./srcs/2017-01-21.nix
+nix-shell -A env --argstr src ./srcs/2017-06-17.nix
 ```
 
 ## Running as a [remote builder](https://nixos.org/wiki/Distributed_build)
