@@ -74,7 +74,7 @@ chmod 600 ssh/insecure_rsa
 cp ssh/insecure_rsa /etc/nix/docker_rsa
 ```
 
-Add an entry for the container in your `~/.ssh_config`, at this point you should be able to ssh to the container.
+Add an entry for the container in your `~/.ssh/config`, at this point you should be able to ssh to the container.
 
 > Note: If you use docker-machine you'll have to use `docker-machine ip` as the host instead of localhost.
 
