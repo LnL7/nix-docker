@@ -11,7 +11,16 @@ remote_sys_conf="$working_dir/remote-systems.conf"
 
 ssh_config="$HOME/.ssh/config"
 
+docker_machine_name="nix-docker-build-machine"  # Not used on Linux
 docker_container_name="nix-docker-build-slave"
+
+
+[ "$(uname)" == "Linux" ] || {
+  echo ">>> Not running on Linux, will be using docker-machine"
+  hash docker-machine 2>/dev/null || { echo "!!! docker-machine not found"; exit 1; }
+
+  use_docker_machine=1
+}
 
 # -- Display info and troubleshooting tips --
 echo "## Use Docker Container as Nix Build Slave"
@@ -24,7 +33,33 @@ echo "##   2. Delete entry in ~/.ssh/config for"
 echo "##        Host \"$docker_container_name\""
 echo "##   3. Delete the docker container named"
 echo "##        $docker_container_name"
+if [ -n "$use_docker_machine" ]; then
+echo "##   4. Delete the docker machine named"
+echo "##        $docker_machine_name"
+fi
 echo
+
+# -- Make sure the docker machine exists and is running if needed
+if [ -n "$use_docker_machine" ]; then
+  dm_status=$(docker-machine status "$docker_machine_name" 2>/dev/null)
+
+  if [ $? -ne 0 ]; then
+    echo ">>> Creating docker machine: $docker_machine_name"
+    docker-machine create "$docker_machine_name"
+  else
+    echo -n ">>> Docker machine $docker_machine_name exists and is "
+
+    if [ "$dm_status" != "Running" ]; then
+      echo "not running, starting"
+      docker-machine start "$docker_machine_name"
+    else
+      echo "running"
+    fi
+  fi
+
+  docker_host_ip=$(docker-machine ip "$docker_machine_name")
+  eval $(docker-machine env "$docker_machine_name")
+fi
 
 # -- Download SSH credentials for docker container --
 echo ">>> Downloading SSH credentials for the docker container"
@@ -41,11 +76,12 @@ if ! grep "$docker_container_name" "$HOME/.ssh/config" > /dev/null; then
 
 Host "$docker_container_name"
   User root
-  HostName 127.0.0.1
+  HostName ${docker_host_ip+127.0.0.1}
   Port 3022
   IdentityFile "$ssh_id_file"
 CONF
 else
+  #TODO: Update docker-machine ip if changed?
   echo ">>> SSH configuration already contains an entry for $docker_container_name in $ssh_config"
 fi
 
