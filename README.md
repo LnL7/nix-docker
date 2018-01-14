@@ -116,5 +116,5 @@ cp ssh/remote-systems.conf /etc/nix/
 
 ```sh
 source /etc/nix/remote-build-env
-nix-build -A hello --argstr system x86_64-linux 
+nix-build '<nixpkgs>' -A hello --argstr system x86_64-linux 
 ```
