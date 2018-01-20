@@ -4,6 +4,8 @@ let
   inherit (pkgs) dockerTools stdenv buildEnv writeText;
   inherit (pkgs) bashInteractive coreutils cacert gnutar gzip less nix openssh shadow;
 
+  inherit (native.lib) concatStringsSep genList;
+
   pkgs = import unstable { system = "x86_64-linux"; };
 
   native = import nixpkgs { inherit system; };
@@ -16,16 +18,13 @@ let
 
   passwd = ''
     root:x:0:0::/root:/run/current-system/sw/bin/bash
-    nixbld1:x:30001:30000::/var/empty:/run/current-system/sw/bin/nologin
-    nixbld2:x:30002:30000::/var/empty:/run/current-system/sw/bin/nologin
-    nixbld3:x:30003:30000::/var/empty:/run/current-system/sw/bin/nologin
-    nixbld4:x:30004:30000::/var/empty:/run/current-system/sw/bin/nologin
+    ${concatStringsSep "\n" (genList (i: "nixbld${toString (i+1)}:x:${toString (i+30001)}:30000::/var/empty:/run/current-system/sw/bin/nologin") 32)}
   '';
 
   group = ''
     root:x:0:
     nogroup:x:65534:
-    nixbld:x:30000:nixbld1,nixbld2,nixbld3,nixbld4
+    nixbld:x:30000:${concatStringsSep "," (genList (i: "nixbld${toString (i+1)}") 32)}
   '';
 
   nsswitch = ''
