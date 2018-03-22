@@ -1,4 +1,4 @@
-FROM lnl7/nix:2018-01-13
+FROM lnl7/nix:2018-03-16
 
 RUN nix-env -f '<nixpkgs>' -iA \
     curl \
