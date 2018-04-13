@@ -1,0 +1,21 @@
+commit b5a9406111c544a6c1191fa6b540986f7992f6a1
+Author: Daiderd Jordan <daiderd@gmail.com>
+Date:   Fri Apr 13 00:32:33 2018 +0200
+
+    Revert "dockerTools.buildImage: do not add /nix/store in the tar stream"
+    
+    This reverts commit ce838e52b94f64a43b02fbcd0ed6b348b2f56e33.
+
+diff --git a/pkgs/build-support/docker/default.nix b/pkgs/build-support/docker/default.nix
+index 653a651df7b..d94ce17e5e6 100644
+--- a/pkgs/build-support/docker/default.nix
++++ b/pkgs/build-support/docker/default.nix
+@@ -476,6 +476,8 @@ rec {
+         cp ${layer}/* temp/
+         chmod ug+w temp/*
+ 
++        echo "$(dirname ${storeDir})" >> layerFiles
++        echo '${storeDir}' >> layerFiles
+         for dep in $(cat $layerClosure); do
+           find $dep >> layerFiles
+         done
