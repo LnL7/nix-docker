@@ -8,11 +8,9 @@ RUN nix-env -f '<nixpkgs>' -iA \
     gnugrep \
     gnused \
     gnutar \
+    gzip \
     jq \
-    nix \
-    nix-repl \
     procps \
-    silver-searcher \
     vim \
     which \
  && nix-store --gc

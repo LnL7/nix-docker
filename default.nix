@@ -2,7 +2,7 @@
 
 let
   inherit (pkgs) dockerTools stdenv buildEnv writeText;
-  inherit (pkgs) bashInteractive coreutils cacert gnutar gzip less nix openssh shadow;
+  inherit (pkgs) bashInteractive coreutils cacert less nix openssh shadow;
 
   inherit (native.lib) concatStringsSep genList;
 
@@ -94,11 +94,9 @@ let
         gnugrep \
         gnused \
         gnutar \
+        gzip \
         jq \
-        nix \
-        nix-repl \
         procps \
-        silver-searcher \
         vim \
         which \
      && nix-store --gc
