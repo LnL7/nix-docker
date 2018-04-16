@@ -9,6 +9,8 @@ stdenv.mkDerivation rec {
     sha256 = "010a165ni23g09xwdm003qv7nn2lmnhg2d4avhwjh1b3lrn0wxl0";
   };
 
+  patches = [ ./docker-tools.patch ];
+
   dontBuild = true;
   preferLocalBuild = true;
 

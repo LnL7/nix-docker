@@ -1,0 +1,29 @@
+commit 9751771c73209b58c89829bf3889473a801a013f
+Author: Jean-Philippe Braun <eon@patapon.info>
+Date:   Thu Apr 12 13:03:56 2018 +0200
+
+    dockerTools.buildImage: add /nix/store with correct permissions
+    
+    Fixes #38835.
+
+diff --git a/pkgs/build-support/docker/default.nix b/pkgs/build-support/docker/default.nix
+index b8eda3d0967..75e279afdc3 100644
+--- a/pkgs/build-support/docker/default.nix
++++ b/pkgs/build-support/docker/default.nix
+@@ -497,6 +497,16 @@ rec {
+         # Record the contents of the tarball with ls_tar.
+         ls_tar temp/layer.tar >> baseFiles
+ 
++        # Append nix/store directory to the layer so that when the layer is loaded in the
++        # image /nix/store has read permissions for non-root users.
++        # nix/store is added only if the layer has /nix/store paths in it.
++        if [ $(wc -l < $layerClosure) -gt 1 ] && [ $(grep -c -e "^/nix/store$" baseFiles) -eq 0 ]; then
++          mkdir -p nix/store
++          chmod -R 555 nix
++          echo "./nix" >> layerFiles
++          echo "./nix/store" >> layerFiles
++        fi
++
+         # Get the files in the new layer which were *not* present in
+         # the old layer, and record them as newFiles.
+         comm <(sort -n baseFiles|uniq) \
