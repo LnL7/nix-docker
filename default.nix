@@ -2,7 +2,7 @@
 
 let
   inherit (pkgs) dockerTools stdenv buildEnv writeText;
-  inherit (pkgs) bashInteractive coreutils cacert less nix openssh shadow;
+  inherit (pkgs) bashInteractive coreutils cacert nix openssh shadow;
 
   inherit (native.lib) concatStringsSep genList;
 
@@ -13,7 +13,7 @@ let
 
   path = buildEnv {
     name = "system-path";
-    paths = [ bashInteractive coreutils less nix shadow ];
+    paths = [ bashInteractive coreutils nix shadow ];
   };
 
   passwd = ''
@@ -65,6 +65,7 @@ let
     config.Env =
       [ "PATH=/root/.nix-profile/bin:/run/current-system/sw/bin"
         "MANPATH=/root/.nix-profile/share/man:/run/current-system/sw/share/man"
+        "NIX_PAGER=cat"
         "NIX_PATH=nixpkgs=${unstable}"
         "GIT_SSL_CAINFO=${cacert}/etc/ssl/certs/ca-bundle.crt"
         "SSL_CERT_FILE=${cacert}/etc/ssl/certs/ca-bundle.crt"
