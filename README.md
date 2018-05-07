@@ -19,7 +19,8 @@ The current official image for [nix](https://hub.docker.com/r/nixos/nix/) is bas
 
 All the images are based on the latest baseimage, previous versions are available in my repository [https://hub.docker.com/r/lnl7/nix/tags](https://hub.docker.com/r/lnl7/nix/tags).
 
-- `lnl7/nix:2018-03-13-patch1` (2.0)
+- `lnl7/nix:2018-04-17` (2.0)
+- `lnl7/nix:2018-03-13-patch1`
 - `lnl7/nix:2018-01-13` (1.11.16)
 - `lnl7/nix:2017-10-07` (1.11.15)
 - `lnl7/nix:2017-06-17` (1.11.10)
