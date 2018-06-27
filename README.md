@@ -34,9 +34,9 @@ All the images are based on the latest baseimage, previous versions are availabl
 ## Default Image
 
 
-The default image is intended for interactive use and includes some common and usefull packages, like nix-repl.
+The default image is intended for interactive use and includes some common and useful packages:
 ```sh
-docker run --rm -it lnl7/nix nix-repl '<nixpkgs>'
+docker run --rm -it lnl7/nix nix repl '<nixpkgs>'
 nix-repl> 
 ```
 
