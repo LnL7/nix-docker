@@ -13,4 +13,5 @@ RUN nix-env -f '<nixpkgs>' -iA \
     procps \
     vim \
     which \
+    xz \
  && nix-store --gc

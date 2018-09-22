@@ -100,6 +100,7 @@ let
         procps \
         vim \
         which \
+        xz \
      && nix-store --gc
   '';
 
