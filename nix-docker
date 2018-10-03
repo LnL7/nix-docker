@@ -1,0 +1,217 @@
+#!/usr/bin/env bash
+
+# Sets up environment to proxy non-x86_64-darwin builds to a Docker image using Nix distributed builds.
+# See: https://nixos.org/nix/manual/#chap-distributed-builds
+#
+# Requires Docker to be installed
+# - For Mac users the easiest way to get Docker working is through Docker for Mac. Native Docker can have
+#   issues interacting with OS X. See: https://www.docker.com/docker-mac
+
+working_dir_name=".nix-docker"
+
+log () {
+  echo ">>> ${1}"
+}
+
+usage () {
+  cat <<EOM
+nix-docker: Start up a Docker container to use as a Nix remote builder
+
+Usage: source nix-docker [-h | --help] <command> [<args>]
+  -h | --help print this message
+
+Commands:
+
+init        Initial bootstrap for using Docker container as a Nix remote builder
+  -d | --dir  specify the directory where configuration files will be placed (default: \${HOME}/${working_dir_name})
+  -n | --name Docker container name (default: nix-docker)
+  -k | --key  path to private SSH key to use to talk to container - assumes the public key is the same but with '.pub' appended (default: ./ssh/insecure_rsa)
+  -p | --port port to connect to Docker container (default: 3022)
+
+start       Run Docker container and setup environment variables
+  -d | --dir  specify the directory where configuration files are located (default: \${HOME}/${working_dir_name})
+  -n | --name Docker container name (default: nix-docker)
+
+EOM
+}
+
+remove_instructions () {
+  cat <<EOM
+To undo everything:
+- Remove the ${docker_name} entry in ${ssh_config}
+- Remove ${working_dir}
+- Stop and remove Docker containers
+
+Example:
+
+$ docker stop ${docker_name}
+$ docker rm ${docker_name}
+$ docker rmi lnl7/nix:ssh
+
+EOM
+}
+
+finish_message () {
+  cat <<EOM
+Setup complete.
+EOM
+}
+
+export_env () {
+  log "Setting \$NIX_REMOTE_SYSTEMS to ${remote_sys_conf}"
+  log "Old value: ${NIX_REMOTE_SYSTEMS}"
+  export NIX_REMOTE_SYSTEMS="${remote_sys_conf}"
+  echo
+
+  nix_current_load="/tmp/nix/current-load"
+  log "Setting \$NIX_CURRENT_LOAD to ${nix_current_load}"
+  log "Old value: ${NIX_CURRENT_LOAD}"
+  mkdir -p "${nix_current_load}"
+  chmod a+rwX "${nix_current_load}"
+  export NIX_CURRENT_LOAD="/tmp/nix/current-load"
+  echo
+
+  build_remote="${HOME}/.nix-profile/libexec/nix/build-remote.pl"
+  log "Setting \$NIX_BUILD_HOOK to ${build_remote}"
+  log "Old value: ${NIX_BUILD_HOOK}"
+  export NIX_BUILD_HOOK="${build_remote}"
+  echo
+}
+
+do_init () {
+  ssh_config="${HOME}/.ssh/config"
+
+  # Default values
+  working_dir="${HOME}/${working_dir_name}"
+  docker_name="nix-docker"
+  key_file="./ssh/insecure_rsa"
+  port_num="3022"
+
+  while [[ $# -gt 0 ]]; do
+    case "${1}" in
+      -d|--dir)
+        working_dir=${2}
+        shift 2
+        ;;
+      -n|--name)
+        docker_name=${2}
+        shift 2
+        ;;
+      -k|--key)
+        key_file=${2}
+        shift 2
+        ;;
+      -p|--port)
+        port_num=${2}
+        shift 2
+        ;;
+    esac
+  done
+
+  # Set up environment
+  mkdir -p "${working_dir}"
+
+  # Copy SSH keys to working directory
+  cp "${key_file}" "${working_dir}"
+  cp "${key_file}.pub" "${working_dir}"
+
+  key_file_name=$(basename "${key_file}")
+  ssh_id_file="${working_dir}/${key_file_name}"
+  chmod 600 "${ssh_id_file}"
+
+  # Check to see if ~/.ssh/config exists - if not, create it
+  [[ -f "${ssh_config}" ]] || touch "${ssh_config}"
+
+  # Check if SSH config file has an entry for our Docker machine - if not, add it
+  if ! grep "${docker_name}\$" "${ssh_config}" > /dev/null; then
+    log "Adding an entry to ${ssh_config} for ${docker_name}."
+    cat >> "${ssh_config}" <<CONF
+
+Host ${docker_name}
+  User root
+  HostName 127.0.0.1
+  Port ${port_num}
+  IdentityFile ${ssh_id_file}
+CONF
+  else
+    log "SSH configuration already contains an entry for ${docker_name}."
+  fi
+  echo
+
+  # Start docker container
+  log "Starting docker container: ${docker_name}"
+  log "Note: This may fail if the container was already created."
+  docker run --restart always --name "${docker_name}" -d -p ${port_num}:22 lnl7/nix:ssh
+  echo
+
+  # Write remote systems configuration
+  remote_sys_conf="${working_dir}/remote-systems.conf"
+  log "Writing remote systems configuration to ${remote_sys_conf}"
+
+  cat > "${remote_sys_conf}" <<CONF
+${docker_name} x86_64-linux ${ssh_id_file} 1
+CONF
+  echo
+
+  # Test connection
+  log "Running SSH test"
+  ssh "${docker_name}" echo "SSH connection succeeded!" || log "SSH connection failed."
+  echo
+
+  # Copy SSH key to container
+  log "Copying SSH key to container"
+  scp "${key_file}.pub" nix-docker:/root/.ssh/authorized_keys
+
+  # Export environment
+  export_env
+
+  remove_instructions
+  finish_message
+}
+
+do_start () {
+  # Default values
+  working_dir="${HOME}/${working_dir_name}"
+  docker_name="nix-docker"
+
+  while [[ $# -gt 0 ]]; do
+    case "${1}" in
+      -d|--dir)
+        working_dir=${2}
+        shift 2
+        ;;
+      -n|--name)
+        docker_name=${2}
+        shift 2
+        ;;
+    esac
+  done
+
+  remote_sys_conf="${working_dir}/remote-systems.conf"
+
+  log "Starting Docker container: ${docker_name}"
+  docker start ${docker_name}
+
+  # Export environment
+  export_env
+  finish_message
+}
+
+log "NOTE: As this script exports variables, it should be run with 'source', e.g. 'source nix-docker'"
+
+while [[ $# -gt 0 ]]; do
+  case "${1}" in
+    -h|--help)
+      usage
+      shift
+      ;;
+    init)
+      shift
+      do_init "$@"
+      ;;
+    start)
+      shift
+      do_start "$@"
+      ;;
+  esac
+done
