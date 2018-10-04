@@ -11,7 +11,16 @@ remote_sys_conf="$working_dir/remote-systems.conf"
 
 ssh_config="$HOME/.ssh/config"
 
-docker_machine_name="nix-docker-build-slave"
+docker_machine_name="nix-docker-build-machine"  # Not used on Linux
+docker_container_name="nix-docker-build-slave"
+
+
+[ "$(uname)" == "Linux" ] || {
+  echo ">>> Not running on Linux, will be using docker-machine"
+  hash docker-machine 2>/dev/null || { echo "!!! docker-machine not found"; exit 1; }
+
+  use_docker_machine=1
+}
 
 # -- Display info and troubleshooting tips --
 echo "## Use Docker Container as Nix Build Slave"
@@ -21,10 +30,36 @@ echo "##"
 echo "## Note: if you experience issues, you can clean up the build slave artifacts and start over by:"
 echo "##   1. rm -r ~/$working_dir_name"
 echo "##   2. Delete entry in ~/.ssh/config for"
-echo "##        Host \"$docker_machine_name\"" 
+echo "##        Host \"$docker_container_name\""
 echo "##   3. Delete the docker container named"
+echo "##        $docker_container_name"
+if [ -n "$use_docker_machine" ]; then
+echo "##   4. Delete the docker machine named"
 echo "##        $docker_machine_name"
+fi
 echo
+
+# -- Make sure the docker machine exists and is running if needed
+if [ -n "$use_docker_machine" ]; then
+  dm_status=$(docker-machine status "$docker_machine_name" 2>/dev/null)
+
+  if [ $? -ne 0 ]; then
+    echo ">>> Creating docker machine: $docker_machine_name"
+    docker-machine create "$docker_machine_name"
+  else
+    echo -n ">>> Docker machine $docker_machine_name exists and is "
+
+    if [ "$dm_status" != "Running" ]; then
+      echo "not running, starting"
+      docker-machine start "$docker_machine_name"
+    else
+      echo "running"
+    fi
+  fi
+
+  docker_host_ip=$(docker-machine ip "$docker_machine_name")
+  eval $(docker-machine env "$docker_machine_name")
+fi
 
 # -- Download SSH credentials for docker container --
 echo ">>> Downloading SSH credentials for the docker container"
@@ -35,35 +70,36 @@ chmod 600 "$ssh_id_file"
 
 # -- Set up SSH configuration --
 [ -f "$ssh_config" ] || touch "$ssh_config"
-if ! grep "$docker_machine_name" "$HOME/.ssh/config" > /dev/null; then
-  echo ">>> Adding an entry to $ssh_config for $docker_machine_name"
+if ! grep "$docker_container_name" "$HOME/.ssh/config" > /dev/null; then
+  echo ">>> Adding an entry to $ssh_config for $docker_container_name"
   cat >> "$ssh_config" <<CONF
 
-Host "$docker_machine_name"
+Host "$docker_container_name"
   User root
-  HostName 127.0.0.1
+  HostName ${docker_host_ip+127.0.0.1}
   Port 3022
   IdentityFile "$ssh_id_file"
 CONF
 else
-  echo ">>> SSH configuration already contains an entry for $docker_machine_name in $ssh_config"
+  #TODO: Update docker-machine ip if changed?
+  echo ">>> SSH configuration already contains an entry for $docker_container_name in $ssh_config"
 fi
 
 # -- Start docker container --
-echo ">>> Starting docker container: $docker_machine_name"
+echo ">>> Starting docker container: $docker_container_name"
 echo "    (This may fail if the container was already created.)"
-docker run --restart always --name "$docker_machine_name" -d -p 3022:22 lnl7/nix:ssh
+docker run --restart always --name "$docker_container_name" -d -p 3022:22 lnl7/nix:ssh
 
 # -- Write remote systems configuration --
 echo ">>> Writing remote systems configuration to $remote_sys_conf"
 rm -f "$remote_sys_conf"
 cat > "$remote_sys_conf" <<CONF
-$docker_machine_name x86_64-linux "$ssh_id_file" 1
+$docker_container_name x86_64-linux "$ssh_id_file" 1
 CONF
 
 # -- Test connection --
 echo ">>> Running SSH test"
-ssh "$docker_machine_name" echo "SSH connection is working." || echo "SSH connection failed."
+ssh "$docker_container_name" echo "SSH connection is working." || echo "SSH connection failed."
 
 # -- Export environment --
 echo ">>> Setting \$NIX_REMOTE_SYSTEMS to use $remote_sys_conf"
