@@ -58,7 +58,7 @@ docker run --restart always --name "$docker_machine_name" -d -p 3022:22 lnl7/nix
 echo ">>> Writing remote systems configuration to $remote_sys_conf"
 rm -f "$remote_sys_conf"
 cat > "$remote_sys_conf" <<CONF
-$docker_machine_name x86_64-linux "$ssh_id_file" 1
+$docker_machine_name x86_64-linux $ssh_id_file 1
 CONF
 
 # -- Test connection --
