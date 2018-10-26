@@ -3,7 +3,7 @@
 Docker images for the Nix package manager
 
 This repository contains nix expressions to build a minimal docker image for the [nix](https://nixos.org/nix) package manager.
-The current official image for [nix](https://hub.docker.com/r/nixos/nix/) is based on alpine, this image that is build from scratch and looks a lot more like [nixos](https://nixos.org/nixos).
+The current [official docker image for nix](https://hub.docker.com/r/nixos/nix/) is based on alpine, this image that is build from scratch and looks a lot more like [nixos](https://nixos.org/nixos).
 
 - nix, bash and coreutils are installed in a system profile that is linked to `/run/current-system/sw`,
   the only global paths are `/bin/sh` and `/usr/bin/env`
@@ -64,7 +64,7 @@ The `src` can also can be overridden to use a custom [nixpkgs](https://github.co
 nix-shell -A env --argstr src ./srcs/2018-03-13.nix
 ```
 
-## Running as a [remote builder](https://nixos.org/wiki/Distributed_build)
+## Running as a [remote builder](https://nixos.wiki/wiki/Distributed_build)
 
 ```sh
 docker run --restart always --name nix-docker -d -p 3022:22 lnl7/nix:ssh
