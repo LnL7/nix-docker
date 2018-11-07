@@ -2,7 +2,7 @@
 
 let
   inherit (pkgs) dockerTools stdenv buildEnv writeText;
-  inherit (pkgs) bashInteractive coreutils cacert nix openssh shadow;
+  inherit (pkgs) bashInteractive coreutils cacert nix openssh shadow iana-etc;
 
   inherit (native.lib) concatStringsSep genList;
 
@@ -36,7 +36,7 @@ let
     phases = [ "installPhase" "fixupPhase" ];
 
     exportReferencesGraph =
-      map (drv: [("closure-" + baseNameOf drv) drv]) [ path cacert unstable ];
+      map (drv: [("closure-" + baseNameOf drv) drv]) [ path cacert iana-etc unstable ];
 
     installPhase = ''
       mkdir -p $out/run/current-system $out/var
@@ -46,11 +46,16 @@ let
       mkdir -p $out/bin $out/usr/bin $out/sbin
       ln -s ${stdenv.shell} $out/bin/sh
       ln -s ${coreutils}/bin/env $out/usr/bin/env
+      ln -s ${bashInteractive} $out/bin/bash
+      ln -s ${bashInteractive} $out/usr/bin/bash
 
       mkdir -p $out/etc
       echo '${passwd}' > $out/etc/passwd
       echo '${group}' > $out/etc/group
       echo '${nsswitch}' > $out/etc/nsswitch.conf
+      ln -s ${iana-etc}/etc/protocols $out/etc/
+      ln -s ${iana-etc}/etc/services $out/etc/
+      ln -s ${cacert}/etc/ssl $out/etc/
 
       printRegistration=1 ${pkgs.perl}/bin/perl ${pkgs.pathsFromGraph} closure-* > $out/.reginfo
     '';
@@ -69,6 +74,7 @@ let
         "NIX_PATH=nixpkgs=${unstable}"
         "GIT_SSL_CAINFO=${cacert}/etc/ssl/certs/ca-bundle.crt"
         "SSL_CERT_FILE=${cacert}/etc/ssl/certs/ca-bundle.crt"
+        "USER=root"
       ];
   };
 
