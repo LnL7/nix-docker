@@ -46,8 +46,8 @@ let
       mkdir -p $out/bin $out/usr/bin $out/sbin
       ln -s ${stdenv.shell} $out/bin/sh
       ln -s ${coreutils}/bin/env $out/usr/bin/env
-      ln -s ${bashInteractive} $out/bin/bash
-      ln -s ${bashInteractive} $out/usr/bin/bash
+      ln -s ${bashInteractive}/bin/bash $out/bin/bash
+      ln -s ${bashInteractive}/bin/bash $out/usr/bin/bash
 
       mkdir -p $out/etc
       echo '${passwd}' > $out/etc/passwd
