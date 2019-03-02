@@ -16,6 +16,11 @@ let
     paths = [ bashInteractive coreutils nix shadow ];
   };
 
+  nixconf = ''
+    build-users-group = nixbld
+    sandbox = false
+  '';
+
   passwd = ''
     root:x:0:0::/root:/run/current-system/sw/bin/bash
     ${concatStringsSep "\n" (genList (i: "nixbld${toString (i+1)}:x:${toString (i+30001)}:30000::/var/empty:/run/current-system/sw/bin/nologin") 32)}
@@ -47,7 +52,8 @@ let
       ln -s ${stdenv.shell} $out/bin/sh
       ln -s ${coreutils}/bin/env $out/usr/bin/env
 
-      mkdir -p $out/etc
+      mkdir -p $out/etc/nix
+      echo '${nixconf}' > $out/etc/nix/nix.conf
       echo '${passwd}' > $out/etc/passwd
       echo '${group}' > $out/etc/group
       echo '${nsswitch}' > $out/etc/nsswitch.conf
