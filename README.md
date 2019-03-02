@@ -19,6 +19,7 @@ The current [official docker image for nix](https://hub.docker.com/r/nixos/nix/)
 
 All the images are based on the latest baseimage, previous versions are available in my repository [https://hub.docker.com/r/lnl7/nix/tags](https://hub.docker.com/r/lnl7/nix/tags).
 
+- `lnl7/nix:2019-03-01` (2.2)
 - `lnl7/nix:2018-09-21` (2.1.2)
 - `lnl7/nix:2018-07-17` (2.0.4)
 - `lnl7/nix:2018-04-17` (2.0)
@@ -45,7 +46,7 @@ nix-repl>
 ## Building an Image
 
 ```Dockerfile
-FROM lnl7/nix:2.1.2
+FROM lnl7/nix:2.2
 
 RUN nix-env -iA \
  nixpkgs.curl \
