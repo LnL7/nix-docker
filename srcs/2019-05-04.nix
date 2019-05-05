@@ -1,8 +1,8 @@
 { stdenv, fetchurl }:
 
 stdenv.mkDerivation rec {
-  name = "nixpkgs-19.09pre170896.6e5caa3f8ac";
-  version = "2019-03-01";
+  name = "nixpkgs-19.09pre178484.8bc70c937b3";
+  version = "2019-05-04";
 
   src = fetchurl {
     url = "https://releases.nixos.org/nixpkgs/${name}/nixexprs.tar.xz";
