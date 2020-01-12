@@ -17,7 +17,7 @@ The current [official docker image for nix](https://hub.docker.com/r/nixos/nix/)
 
 ## Base Images
 
-All the images are based on the latest baseimage, previous versions are available in my repository [https://hub.docker.com/r/lnl7/nix/tags](https://hub.docker.com/r/lnl7/nix/tags).
+All the images are based on the latest baseimage, previous versions are available in my repository (https://hub.docker.com/r/lnl7/nix/tags](https://hub.docker.com/r/lnl7/nix/tags).
 
 - `lnl7/nix:2019-03-01` (2.2)
 - `lnl7/nix:2018-09-21` (2.1.2)
@@ -40,7 +40,7 @@ All the images are based on the latest baseimage, previous versions are availabl
 The default image is intended for interactive use and includes some common and useful packages:
 ```sh
 docker run --rm -it lnl7/nix nix repl '<nixpkgs>'
-nix-repl> 
+nix-repl>
 ```
 
 ## Building an Image
@@ -122,5 +122,5 @@ cp ssh/remote-systems.conf /etc/nix/
 
 ```sh
 source /etc/nix/remote-build-env
-nix-build '<nixpkgs>' -A hello --argstr system x86_64-linux 
+nix-build '<nixpkgs>' -A hello --argstr system x86_64-linux
 ```

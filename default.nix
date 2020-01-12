@@ -1,4 +1,4 @@
-{ src ? ./srcs/2019-05-04.nix, nixpkgs ? <nixpkgs>, system ? builtins.currentSystem }:
+{ src ? ./srcs/2020-01-02.nix, nixpkgs ? <nixpkgs>, system ? builtins.currentSystem }:
 
 let
   inherit (pkgs) dockerTools stdenv buildEnv writeText;
@@ -90,7 +90,7 @@ let
   '';
 
   latestDocker = writeText "Dockerfile" ''
-    FROM lnl7/nix:${unstable.version}
+    FROM monacoremo/nix:${unstable.version}
 
     RUN nix-env -f '<nixpkgs>' -iA \
         curl \
@@ -109,8 +109,17 @@ let
      && nix-store --gc
   '';
 
+  circleciDocker = writeText "Dockerfile" ''
+    FROM monacoremo/nix:${unstable.version}
+
+    RUN nix-env -f '<nixpkgs>' -iA \
+        git \
+        openssh \
+     && nix-store --gc
+  '';
+
   sshDocker = writeText "Dockerfile" ''
-    FROM lnl7/nix:${unstable.version}
+    FROM monacoremo/nix:${unstable.version}
 
     RUN nix-env -f '<nixpkgs>' -iA \
         gnused \
@@ -146,7 +155,7 @@ let
     docker load < $imageOut
     echo "building ${unstable.version}..." >&2
     cp -f ${baseDocker} Dockerfile
-    docker build -t lnl7/nix:${unstable.version} .
+    docker build -t monacoremo/nix:${unstable.version} .
     docker rmi nix-base:${unstable.version}
   '';
 
@@ -157,6 +166,7 @@ let
 
       cp -f ${baseDocker} Dockerfile
       cp -f ${latestDocker} latest/Dockerfile
+      cp -f ${circleciDocker} circleci/Dockerfile
       cp -f ${sshDocker} ssh/Dockerfile
     '';
   };
@@ -164,6 +174,6 @@ let
 in
 
 {
-  inherit baseDocker latestDocker sshDocker;
+  inherit baseDocker latestDocker circleciDocker sshDocker;
   inherit env run image contents path unstable;
 }
