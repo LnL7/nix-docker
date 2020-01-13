@@ -1,0 +1,28 @@
+version: 2
+jobs:
+  build:
+    machine: true
+    steps:
+      - checkout
+      - run:
+          name: Install Nix
+          command: |
+            curl https://nixos.org/nix/install | sh
+            . /home/circleci/.nix-profile/etc/profile.d/nix.sh
+            nix-channel --add https://nixos.org/channels/nixpkgs-unstable nixpkgs
+            nix-channel --update
+      - run:
+          name: Build images
+          command: |
+            . /home/circleci/.nix-profile/etc/profile.d/nix.sh
+            nix-shell --run nix-docker-build
+      - run:
+          name: Login to Dockerhub
+          command: |
+            . /home/circleci/.nix-profile/etc/profile.d/nix.sh
+            docker login -u $DOCKERHUB_USER -p $DOCKERHUB_PASSWORD
+      - run:
+          name: Push images
+          command: |
+            . /home/circleci/.nix-profile/etc/profile.d/nix.sh
+            nix-shell --run nix-docker-push
