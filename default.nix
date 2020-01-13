@@ -30,12 +30,14 @@ let
   passwd =
     ''
       root:x:0:0::/root:/run/current-system/sw/bin/bash
+      user:x:1000:1000::/home/user:/run/current-system/sw/bin/bash
       ${concatStringsSep "\n" (genList (i: "nixbld${toString (i+1)}:x:${toString (i+30001)}:30000::/var/empty:/run/current-system/sw/bin/nologin") 32)}
     '';
 
   group =
     ''
       root:x:0:
+      user:x:1000:user
       nogroup:x:65534:
       nixbld:x:30000:${concatStringsSep "," (genList (i: "nixbld${toString (i+1)}") 32)}
     '';
@@ -62,6 +64,9 @@ let
         ln -s ${stdenv.shell} $out/bin/sh
         ln -s ${coreutils}/bin/env $out/usr/bin/env
 
+        mkdir -p $out/etc/ssl
+        ln -s ${cacert}/etc/ssl/certs $out/etc/ssl/certs
+
         mkdir -p $out/etc/nix
         echo '${nixconf}' > $out/etc/nix/nix.conf
         echo '${passwd}' > $out/etc/passwd
@@ -80,19 +85,21 @@ let
 
       config.Cmd = [ "${bashInteractive}/bin/bash" ];
       config.Env =
-        [ "PATH=/root/.nix-profile/bin:/run/current-system/sw/bin"
+        [
+          "PATH=/root/.nix-profile/bin:/run/current-system/sw/bin"
           "MANPATH=/root/.nix-profile/share/man:/run/current-system/sw/share/man"
           "NIX_PAGER=cat"
           "NIX_PATH=nixpkgs=${unstable}"
           "NIX_SSL_CERT_FILE=${cacert}/etc/ssl/certs/ca-bundle.crt"
         ];
+      config.WorkingDir = "/root";
     };
 
   baseDocker =
     writeTextDir "Dockerfile"
       ''
         FROM nix-base:${unstable.version}
-        RUN nix-store --init && nix-store --load-db < .reginfo
+        RUN nix-store --init && nix-store --load-db < /.reginfo
 
         RUN mkdir -m 1777 -p /tmp \
          && mkdir -p /nix/var/nix/gcroots /nix/var/nix/profiles/per-user/root /root/.nix-defexpr /var/empty \
@@ -134,6 +141,7 @@ let
             gzip \
             git \
             openssh \
+            su-exec \
          && nix-store --gc
       '';
 
