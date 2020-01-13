@@ -102,11 +102,13 @@ let
         RUN nix-store --init && nix-store --load-db < /.reginfo
 
         RUN mkdir -m 1777 -p /tmp \
-         && mkdir -p /nix/var/nix/gcroots /nix/var/nix/profiles/per-user/root /root/.nix-defexpr /var/empty \
-         && ln -s ${path} /nix/var/nix/gcroots/booted-system \
-         && ln -s /nix/var/nix/profiles/per-user/root/profile /root/.nix-profile \
-         && ln -s ${unstable} /root/.nix-defexpr/nixos \
-         && ln -s ${unstable} /root/.nix-defexpr/nixpkgs
+          && mkdir -p /nix/var/nix/gcroots /nix/var/nix/profiles/per-user/root /root/.nix-defexpr /var/empty \
+          && ln -s ${path} /nix/var/nix/gcroots/booted-system \
+          && ln -s /nix/var/nix/profiles/per-user/root/profile /root/.nix-profile \
+          && ln -s ${unstable} /root/.nix-defexpr/nixos \
+          && ln -s ${unstable} /root/.nix-defexpr/nixpkgs \
+          && nix-store --optimize \
+          && nix-store --verify --check-contents
       '';
 
   latestDocker =
