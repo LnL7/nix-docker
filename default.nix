@@ -2,7 +2,7 @@
 
 let
   inherit (pkgs) dockerTools stdenv buildEnv writeText;
-  inherit (pkgs) bashInteractive coreutils cacert nix openssh shadow;
+  inherit (pkgs) bashInteractive coreutils cacert nix openssh;
 
   inherit (native.lib) concatStringsSep genList;
 
@@ -10,6 +10,8 @@ let
 
   native = import nixpkgs { inherit system; };
   unstable = native.callPackage src { stdenv = native.stdenvNoCC; };
+
+  shadow = pkgs.shadow.override { pam = null; };
 
   path = buildEnv {
     name = "system-path";
