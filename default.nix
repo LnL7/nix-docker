@@ -126,9 +126,9 @@ let
      && echo "PermitRootLogin yes" >> /etc/ssh/sshd_config \
      && ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N "" -t rsa \
      && ssh-keygen -f /etc/ssh/ssh_host_dsa_key -N "" -t dsa \
-     && echo "export SSL_CERT_FILE=$SSL_CERT_FILE" >> /etc/bashrc \
-     && echo "export PATH=$PATH" >> /etc/bashrc \
      && echo "export NIX_PATH=$NIX_PATH" >> /etc/bashrc \
+     && echo "export NIX_SSL_CERT_FILE=$NIX_SSL_CERT_FILE" >> /etc/bashrc \
+     && echo "export PATH=$PATH" >> /etc/bashrc \
      && echo "source /etc/bashrc" >> /etc/profile
 
     ADD insecure_rsa /root/.ssh/id_rsa
