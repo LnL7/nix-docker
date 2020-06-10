@@ -75,19 +75,26 @@ docker run --restart always --name nix-docker -d -p 3022:22 lnl7/nix:ssh
 
 If you have not setup a remote builder before you can follow these steps.
 
-#### Configure ssh
-
+#### Configure SSH
 ```sh
-mkdir -p /etc/nix
-chmod 600 ssh/insecure_rsa
-cp ssh/insecure_rsa /etc/nix/docker_rsa
+sudo mkdir -p /etc/nix
+sudo chmod 600 ssh/insecure_rsa
+sudo cp ssh/insecure_rsa /etc/nix/docker_rsa
 ```
 
-Add an entry for the container in your `~/.ssh/config`, at this point you should be able to ssh to the container.
+#### Add an entry for the container in your ~/.ssh/config
+```sh
+Host nix-docker
+  User root
+  HostName 127.0.0.1
+  Port 3022
+  IdentityFile /etc/nix/docker_rsa
+```
+Note: If you have permission issues reading `/etc/nix/docker_rsa` you can reference a copy in your home folder.
+At this point you should be able to ssh to the container.
 
-> Note: If you use docker-machine you'll have to use `docker-machine ip` as the host instead of localhost.
-
-```sshconfig
+#### Add an ssh entry to /var/root/.ssh/config if you are using nix daemon
+```sh
 Host nix-docker
   User root
   HostName 127.0.0.1
@@ -95,16 +102,14 @@ Host nix-docker
   IdentityFile /etc/nix/docker_rsa
 ```
 
-Optionally you can setup your own ssh key, instead of using the insecure key.
-
+#### Optionally setup your own ssh key, instead of using the insecure key.
 ```sh
 ssh-keygen -t rsa -b 2048 -N "" -f docker_rsa
 scp docker_rsa.pub nix-docker:/root/.ssh/authorized_keys
-cp docker_rsa /etc/nix/
+sudo cp docker_rsa /etc/nix/
 ```
 
 #### Create a signing keypair
-
 ```sh
 openssl genrsa -out /etc/nix/signing-key.sec 2048
 openssl rsa -in /etc/nix/signing-key.sec -pubout > /etc/nix/signing-key.pub
@@ -113,16 +118,13 @@ ssh nix-docker mkdir -p /etc/nix
 scp /etc/nix/signing-key.sec nix-docker:/etc/nix/signing-key.sec
 ```
 
-#### Setup the container as a remote builder
-
+### Setup the container as a remote builder
 ```sh
 cp ssh/remote-build-env /etc/nix/
-cp ssh/remote-systems.conf /etc/nix/
+cp ssh/remote-systems.conf /etc/nix/machines
 ```
 
-#### Build a linux derivation
-
+### Build a linux derivation
 ```sh
-source /etc/nix/remote-build-env
-nix-build '<nixpkgs>' -A hello --argstr system x86_64-linux 
+nix-build -E 'with import <nixpkgs> { system = "x86_64-linux"; }; hello.overrideAttrs (drv: { REBUILD = builtins.currentTime; })'
 ```
