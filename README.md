@@ -119,7 +119,7 @@ Host nix-docker
 ssh-keygen -t rsa -b 2048 -N "" -f docker_rsa
 scp docker_rsa.pub nix-docker:/root/.ssh/authorized_keys
 ```
-Then copy the key to either `/etc/nix` or `~/ssh` depending on if you are running nix in single or multi user mode.
+Then copy the key to either `/etc/nix` or `~/.ssh` depending on if you are running nix in single or multi user mode.
 
 #### Create a signing keypair
 ```sh
