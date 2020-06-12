@@ -96,7 +96,7 @@ Host nix-docker
   IdentityFile ~/.ssh/docker_rsa
 ```
 
-#### Multi User Mode (Nix Daemon)
+##### Multi User Mode (Nix Daemon)
 
 Copy the insecure rsa key to /etc/nix
 ```sh
