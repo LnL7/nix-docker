@@ -83,8 +83,8 @@ it. Optional instructions for generating a fresh key are provided at the end.
 
 Copy the rsa key to your ssh folder
 ```sh
-sudo chmod 600 ssh/insecure_rsa
-sudo cp ssh/insecure_rsa ~/.ssh/docker_rsa
+chmod 600 ssh/insecure_rsa
+cp ssh/insecure_rsa ~/.ssh/docker_rsa
 ```
 
 Add an entry for the container in your ~/.ssh/config
@@ -96,15 +96,12 @@ Host nix-docker
   IdentityFile ~/.ssh/docker_rsa
 ```
 
-Note: If you have permission issues reading `/etc/nix/docker_rsa` you can reference a copy in your home folder.
-At this point you should be able to ssh to the container.
-
 #### Multi User Mode (Nix Daemon)
 
 Copy the insecure rsa key to /etc/nix
 ```sh
 sudo mkdir -p /etc/nix
-sudo chmod 600 ssh/insecure_rsa
+chmod 600 ssh/insecure_rsa
 sudo cp ssh/insecure_rsa /etc/nix/docker_rsa
 ```
 
