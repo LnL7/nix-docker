@@ -76,24 +76,39 @@ docker run --restart always --name nix-docker -d -p 3022:22 lnl7/nix:ssh
 If you have not setup a remote builder before you can follow these steps.
 
 #### Configure SSH
+An insecure rsa key is provided in the repo, the following assumes you are using
+it. Optional instructions for generating a fresh key are provided at the end.
+
+##### Single User Mode 
+
+Copy the rsa key to your ssh folder
+```sh
+sudo chmod 600 ssh/insecure_rsa
+sudo cp ssh/insecure_rsa ~/.ssh/docker_rsa
+```
+
+Add an entry for the container in your ~/.ssh/config
+```sh
+Host nix-docker
+  User root
+  HostName 127.0.0.1
+  Port 3022
+  IdentityFile ~/.ssh/docker_rsa
+```
+
+Note: If you have permission issues reading `/etc/nix/docker_rsa` you can reference a copy in your home folder.
+At this point you should be able to ssh to the container.
+
+#### Multi User Mode (Nix Daemon)
+
+Copy the insecure rsa key to /etc/nix
 ```sh
 sudo mkdir -p /etc/nix
 sudo chmod 600 ssh/insecure_rsa
 sudo cp ssh/insecure_rsa /etc/nix/docker_rsa
 ```
 
-#### Add an entry for the container in your ~/.ssh/config
-```sh
-Host nix-docker
-  User root
-  HostName 127.0.0.1
-  Port 3022
-  IdentityFile /etc/nix/docker_rsa
-```
-Note: If you have permission issues reading `/etc/nix/docker_rsa` you can reference a copy in your home folder.
-At this point you should be able to ssh to the container.
-
-#### Add an ssh entry to /var/root/.ssh/config if you are using nix daemon
+Add an ssh entry to /var/root/.ssh/config if you are using nix daemon
 ```sh
 Host nix-docker
   User root
@@ -102,12 +117,12 @@ Host nix-docker
   IdentityFile /etc/nix/docker_rsa
 ```
 
-#### Optionally setup your own ssh key, instead of using the insecure key.
+#### Optional: setup your own ssh key, instead of using the insecure key.
 ```sh
 ssh-keygen -t rsa -b 2048 -N "" -f docker_rsa
 scp docker_rsa.pub nix-docker:/root/.ssh/authorized_keys
-sudo cp docker_rsa /etc/nix/
 ```
+Then copy the key to either `/etc/nix` or `~/ssh` depending on if you are running nix in single or multi user mode.
 
 #### Create a signing keypair
 ```sh
@@ -121,7 +136,7 @@ scp /etc/nix/signing-key.sec nix-docker:/etc/nix/signing-key.sec
 ### Setup the container as a remote builder
 ```sh
 cp ssh/remote-build-env /etc/nix/
-cp ssh/remote-systems.conf /etc/nix/machines
+cp ssh/machines /etc/nix/
 ```
 
 ### Build a linux derivation
