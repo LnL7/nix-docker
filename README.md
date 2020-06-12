@@ -132,8 +132,8 @@ scp /etc/nix/signing-key.sec nix-docker:/etc/nix/signing-key.sec
 
 ### Setup the container as a remote builder
 ```sh
-cp ssh/remote-build-env /etc/nix/
-cp ssh/machines /etc/nix/
+sudo cp ssh/remote-build-env /etc/nix/
+sudo cp ssh/machines /etc/nix/
 ```
 
 ### Build a linux derivation
