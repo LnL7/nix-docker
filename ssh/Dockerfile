@@ -1,4 +1,4 @@
-FROM lnl7/nix:2020-06-07
+FROM lnl7/nix:2020-09-11
 
 RUN nix-env -f '<nixpkgs>' -iA \
     gnused \
@@ -21,4 +21,4 @@ ADD insecure_rsa /root/.ssh/id_rsa
 ADD insecure_rsa.pub /root/.ssh/authorized_keys
 
 EXPOSE 22
-CMD ["/nix/store/0fyc1wr4ndxai9645w87ynd5js3pnxl9-openssh-8.2p1/bin/sshd", "-D", "-e"]
+CMD ["/nix/store/f772niv2vajba3fr7xhh3infynyxr7c7-openssh-8.3p1/bin/sshd", "-D", "-e"]
