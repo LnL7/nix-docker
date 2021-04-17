@@ -70,6 +70,14 @@ nix-shell -A env --argstr src ./srcs/2018-03-13.nix
 
 ## Running as a [remote builder](https://nixos.wiki/wiki/Distributed_build)
 
+### Quickstart
+
+```sh
+source <(curl https://raw.githubusercontent.com/LnL7/nix-docker/master/start-docker-nix-build-slave)
+```
+
+### Manually
+
 ```sh
 docker run --restart always --name nix-docker -d -p 3022:22 lnl7/nix:ssh
 ```
