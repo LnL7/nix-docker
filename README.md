@@ -145,7 +145,13 @@ sudo cp ssh/remote-build-env /etc/nix/
 sudo cp ssh/machines /etc/nix/
 ```
 
-### Build a linux derivation
+### Usage
+
+#### Build a linux derivation
 ```sh
 nix-build -E 'with import <nixpkgs> { system = "x86_64-linux"; }; hello.overrideAttrs (drv: { REBUILD = builtins.currentTime; })'
 ```
+
+#### Build a docker image
+
+See nixos guide [here](https://nixos.org/guides/building-and-running-docker-images.html).
