@@ -118,7 +118,7 @@ Host nix-docker
 #### Optional: setup your own ssh key, instead of using the insecure key.
 ```sh
 ssh-keygen -t rsa -b 2048 -N "" -f docker_rsa
-scp docker_rsa.pub nix-docker:/root/.ssh/authorized_keys
+docker cp docker_rsa.pub nix-docker:/root/.ssh/authorized_keys
 ```
 Then copy the key to either `/etc/nix` or `~/.ssh` depending on if you are running nix in single or multi user mode.
 
@@ -128,7 +128,7 @@ openssl genrsa -out /etc/nix/signing-key.sec 2048
 openssl rsa -in /etc/nix/signing-key.sec -pubout > /etc/nix/signing-key.pub
 chmod 600 /etc/nix/signing-key.sec
 ssh nix-docker mkdir -p /etc/nix
-scp /etc/nix/signing-key.sec nix-docker:/etc/nix/signing-key.sec
+docker cp /etc/nix/signing-key.sec nix-docker:/etc/nix/signing-key.sec
 ```
 
 ### Setup the container as a remote builder
