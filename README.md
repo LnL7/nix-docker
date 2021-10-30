@@ -82,10 +82,12 @@ it. Optional instructions for generating a fresh key are provided at the end.
 
 ##### Single User Mode 
 
-Copy the rsa key to your ssh folder
+Copy the insecure rsa key to /etc/nix
 ```sh
+sudo mkdir -p /etc/nix
+chown -R username /etc/nix
 chmod 600 ssh/insecure_rsa
-cp ssh/insecure_rsa ~/.ssh/docker_rsa
+sudo cp ssh/insecure_rsa /etc/nix/docker_rsa
 ```
 
 Add an entry for the container in your ~/.ssh/config
@@ -94,7 +96,7 @@ Host nix-docker
   User root
   HostName 127.0.0.1
   Port 3022
-  IdentityFile ~/.ssh/docker_rsa
+  IdentityFile /etc/nix/docker_rsa
 ```
 
 ##### Multi User Mode (Nix Daemon)
@@ -120,7 +122,7 @@ Host nix-docker
 ssh-keygen -t rsa -b 2048 -N "" -f docker_rsa
 scp docker_rsa.pub nix-docker:/root/.ssh/authorized_keys
 ```
-Then copy the key to either `/etc/nix` or `~/.ssh` depending on if you are running nix in single or multi user mode.
+Then copy the key to `/etc/nix`.
 
 #### Create a signing keypair
 ```sh
@@ -136,8 +138,20 @@ scp /etc/nix/signing-key.sec nix-docker:/etc/nix/signing-key.sec
 sudo cp ssh/remote-build-env /etc/nix/
 sudo cp ssh/machines /etc/nix/
 ```
+Edit the `nix.conf` (Found in `~/.config/nix/nix.conf` for single user installation) and make sure that it contains this line:
+
+```
+builders = @/etc/nix/machines
+```
 
 ### Build a linux derivation
 ```sh
 nix-build -E 'with import <nixpkgs> { system = "x86_64-linux"; }; hello.overrideAttrs (drv: { REBUILD = builtins.currentTime; })'
 ```
+
+
+### Troubleshooting
+
+Problem: `ssh: Could not resolve hostname nix-docker: nodename nor servname provided, or n
+ot known`
+Solution: Add a line with `127.0.0.1 nix-docker` to `/etc/hosts`
